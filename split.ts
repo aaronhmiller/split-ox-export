@@ -1,30 +1,30 @@
 // Import necessary Deno modules
-//import { readTextFile, writeTextFile } from "https://deno.land/std/fs/mod.ts";
-//import { prompt } from "https://deno.land/std/io/mod.ts";
-
-// Function to process the JSON file
+// Function to process the JSON file and write to a subdirectory
 async function processJsonFile(filePath: string) {
   try {
     // Read the content of the JSON file
-    const jsonData = await readTextFile(filePath);
+    const jsonData = await Deno.readTextFile(filePath);
     
     // Parse the JSON content into an array of objects
     const dataArray = JSON.parse(jsonData);
 
     // Check if the data is an array
     if (Array.isArray(dataArray)) {
+      const dirPath = "split-files";
+      await Deno.mkdir(dirPath);
+
       // Loop through each object in the array
       for (let i = 0; i < dataArray.length; i++) {
         const bomObject = dataArray[i];
         
         // Construct a file name based on the serial number or index
-        const fileName = `bom_${bomObject.serialNumber || i}.json`;
+        const fileName = `${dirPath}/bom_${bomObject.serialNumber || i}.json`;
 
         // Convert the object to a JSON string with indentation
         const fileContent = JSON.stringify(bomObject, null, 2);
 
-        // Write the JSON content to a new file
-        await writeTextFile(fileName, fileContent);
+        // Write the JSON content to a new file in the "split-files" directory
+        await Deno.writeTextFile(fileName, fileContent);
 
         console.log(`Created file: ${fileName}`);
       }
@@ -37,9 +37,10 @@ async function processJsonFile(filePath: string) {
 }
 
 // Prompt the user for the JSON file path
-const filePath = prompt("Please enter the path to the JSON file: ");
+const filePath = prompt("Please enter the path to the JSON file:");
 if (filePath) {
   await processJsonFile(filePath);
 } else {
   console.error("No file path provided.");
 }
+
