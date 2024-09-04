@@ -4,7 +4,7 @@ async function processJsonFile(filePath: string) {
   try {
     // Read the content of the JSON file
     const jsonData = await Deno.readTextFile(filePath);
-    
+
     // Parse the JSON content into an array of objects
     const dataArray = JSON.parse(jsonData);
 
@@ -26,7 +26,7 @@ async function processJsonFile(filePath: string) {
       // Loop through each object in the array
       for (let i = 0; i < dataArray.length; i++) {
         const bomObject = dataArray[i];
-        
+
         // Construct a file name based on the serial number or index
         const fileName = `${dirPath}/bom_${bomObject.serialNumber || i}.json`;
 
@@ -53,4 +53,3 @@ if (filePath) {
 } else {
   console.error("No file path provided.");
 }
-

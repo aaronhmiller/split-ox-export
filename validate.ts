@@ -26,7 +26,7 @@ async function runSbomUtility() {
       const process = Deno.run({
         cmd: ["./sbom-utility", "-i", filePath, "validate"],
         stdout: "piped",
-        stderr: "piped"
+        stderr: "piped",
       });
 
       const { code } = await process.status();
@@ -52,4 +52,3 @@ async function runSbomUtility() {
 
 // Execute the function
 await runSbomUtility();
-
