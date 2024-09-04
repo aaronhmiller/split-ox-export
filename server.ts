@@ -1,8 +1,7 @@
 import { Hono } from "https://deno.land/x/hono/mod.ts";
-import { serve } from "https://deno.land/std/http/mod.ts"; // Deno's serve function
-import { join } from "https://deno.land/std/path/mod.ts";
-import { processJsonFile } from "./split.ts";
-import { ensureDir } from "https://deno.land/std/fs/mod.ts";
+import { serve } from "https://deno.land/std/http/mod.ts";
+import { processJsonFileInMemory } from "./split.ts";
+import { JSZip } from "https://deno.land/x/jszip@v0.11.0/mod.ts";
 
 const app = new Hono();
 
@@ -14,63 +13,38 @@ app.get("/", async (c) => {
 
 // Handle file upload
 app.post("/upload", async (c) => {
-  const formData = await c.req.parseBody(); // Parse the form data directly with Hono
-  const uploadedFile = formData.file; // Access the uploaded file
+  const formData = await c.req.parseBody();
+  const uploadedFile = formData.file;
 
   if (!uploadedFile) {
     console.error("No file uploaded.");
     return c.text("No file uploaded", 400);
   }
 
-  // Create directory for the output files
-  const outputDir = "./output";
-  const splitDir = join(outputDir, "split-files");
-  await ensureDir(outputDir);
-  // the splitDir is NOT created here, it's created in processJsonFile()
+  // Read the file content
+  const fileContent = await uploadedFile.text();
 
-  // Save the uploaded file temporarily
-  const uploadedFilePath = join(outputDir, uploadedFile.name);
-  const fileContent = await uploadedFile.arrayBuffer(); // Read file content
-  await Deno.writeFile(uploadedFilePath, new Uint8Array(fileContent)); // Save it to disk
+  // Process the JSON in memory
+  const splitFiles = await processJsonFileInMemory(fileContent);
 
-  // Call the `split.ts` logic to split the file and save the output in the `splitDir`
-  await processJsonFile(uploadedFilePath, splitDir);
-  // Create a zip file using the zip command-line tool
-  const zipFilePath =  "../output.zip";
-  const zipProcess = Deno.run({
-    cmd: ["zip", "-r", zipFilePath, "."],
-    cwd: splitDir,
-  });
-
-  const status = await zipProcess.status();
-  
-  if (!status.success) {
-    console.error("Error creating zip file");
-    return c.text("Error creating zip file", 500);
+  // Create a zip file in memory
+  const zip = new JSZip();
+  for (const [filename, content] of Object.entries(splitFiles)) {
+    zip.file(filename, content);
   }
 
-  console.log(`Zip file created at ${zipFilePath}`);
+  // Generate the zip content
+  const zipContent = await zip.generateAsync({ type: "uint8array" });
+
+  console.log(`Zip file created in memory, size: ${zipContent.length} bytes`);
 
   // Serve the zip file for download
-  try {
-    const downloadFilePath = join(outputDir, "output.zip");
-    const zipFile = await Deno.readFile(downloadFilePath);
-    console.log(`Zip file read from disk, size: ${zipFile.length} bytes`);
-
-    // Tidy up for the next run, delete the outputDir directory
-    await Deno.remove(outputDir, { recursive: true });
-    console.log("Deleted output/split-files directory");
-
-    return c.body(zipFile, 200, {
-      'Content-Type': 'application/zip',
-      'Content-Disposition': 'attachment; filename="output.zip"',
-    });
-  } catch (error) {
-    console.error("Error reading zip file for download:", error);
-    return c.text("Error preparing zip file for download", 500);
-  }
+  return c.body(zipContent, 200, {
+    'Content-Type': 'application/zip',
+    'Content-Disposition': 'attachment; filename="output.zip"',
+  });
 });
 
 // Start the server
-serve(app.fetch, { port: 3000 });
+serve(app.fetch);
 console.log("Server running on http://localhost:3000");
