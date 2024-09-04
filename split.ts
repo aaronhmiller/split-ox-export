@@ -1,6 +1,6 @@
 // Import necessary Deno modules
 // Function to process the JSON file and write to a subdirectory
-export async function processJsonFileInMemory(
+export async function processJsonInMemory(
   filePath: string,
 ) {
   try {
@@ -33,7 +33,7 @@ export async function processJsonFileInMemory(
 if (import.meta.main) {
   const filePath = prompt("Please enter the path to the JSON file: ");
   if (filePath) {
-    await processJsonFileInMemory(filePath);
+    await processJsonInMemory(filePath);
   } else {
     console.error("No file path provided.");
   }

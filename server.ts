@@ -1,7 +1,7 @@
 import { Hono } from "https://deno.land/x/hono/mod.ts";
 import { serve } from "https://deno.land/std/http/mod.ts";
-import { processJsonFileInMemory } from "./split.ts";
-import { JSZip } from "https://deno.land/x/jszip@v0.11.0/mod.ts";
+import { processJsonInMemory } from "./split.ts";
+import { zip } from "https://deno.land/x/zipjs/mod.ts";
 
 const app = new Hono();
 
@@ -25,16 +25,17 @@ app.post("/upload", async (c) => {
   const fileContent = await uploadedFile.text();
 
   // Process the JSON in memory
-  const splitFiles = await processJsonFileInMemory(fileContent);
+  const splitFiles = await processJsonInMemory(fileContent);
 
   // Create a zip file in memory
-  const zip = new JSZip();
+  const zipWriter = new zip.ZipWriter(new zip.Uint8ArrayWriter());
+
   for (const [filename, content] of Object.entries(splitFiles)) {
-    zip.file(filename, content);
+    await zipWriter.add(filename, new zip.TextReader(content));
   }
 
   // Generate the zip content
-  const zipContent = await zip.generateAsync({ type: "uint8array" });
+  const zipContent = await zipWriter.close();
 
   console.log(`Zip file created in memory, size: ${zipContent.length} bytes`);
 
