@@ -11,7 +11,17 @@ async function processJsonFile(filePath: string) {
     // Check if the data is an array
     if (Array.isArray(dataArray)) {
       const dirPath = "split-files";
-      await Deno.mkdir(dirPath);
+      //check if dir there and if not, create it
+      try {
+        const status = await Deno.stat(dirPath);
+        if (status.isDirectory) {
+          console.log(`[INFO] ${dirPath} directory already exists`);
+        } else {
+          await Deno.mkdir(dirPath);
+        }
+      } catch (error) {
+        throw error;
+      }
 
       // Loop through each object in the array
       for (let i = 0; i < dataArray.length; i++) {
