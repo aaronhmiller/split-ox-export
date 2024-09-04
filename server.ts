@@ -95,6 +95,12 @@ for (let i = 0; i < 256; i++) {
   crc32Table[i] = c;
 }
 
+// Serve the upload form
+app.get("/", async (c) => {
+  const html = await Deno.readTextFile("./index.html");
+  return c.html(html);
+});
+
 // Handle file upload
 app.post("/upload", async (c) => {
   const formData = await c.req.parseBody();
