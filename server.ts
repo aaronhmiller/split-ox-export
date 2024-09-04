@@ -16,22 +16,32 @@ function createZip(files: Record<string, string>): Uint8Array {
       ...new Uint8Array(new Uint32Array([Date.now()]).buffer),
       ...new Uint8Array(new Uint32Array([fileData.length]).buffer),
       ...new Uint8Array(new Uint32Array([fileData.length]).buffer),
-      ...new Uint16Array([filename.length]).buffer,
+      ...new Uint8Array(new Uint16Array([filename.length]).buffer),
       0x00, 0x00,
     ]);
 
     zipParts.push(header, encoder.encode(filename), fileData);
   }
 
+  const centralDirectorySize = zipParts.reduce((acc, part) => acc + part.length, 0);
   const centralDirectory = new Uint8Array([
     0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
-    ...new Uint16Array([Object.keys(files || {}).length]).buffer,
-    ...new Uint16Array([Object.keys(files || {}).length]).buffer,
-    ...new Uint32Array([zipParts.reduce((acc, part) => acc + part.length, 0)]).buffer,
+    ...new Uint8Array(new Uint16Array([Object.keys(files || {}).length]).buffer),
+    ...new Uint8Array(new Uint16Array([Object.keys(files || {}).length]).buffer),
+    ...new Uint8Array(new Uint32Array([centralDirectorySize]).buffer),
     0x00, 0x00, 0x00, 0x00,
   ]);
 
-  return new Uint8Array([...zipParts.flat(), ...centralDirectory]);
+  const totalLength = zipParts.reduce((acc, part) => acc + part.length, 0) + centralDirectory.length;
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const part of zipParts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  result.set(centralDirectory, offset);
+
+  return result;
 }
 
 // Serve the upload form
