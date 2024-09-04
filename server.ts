@@ -22,10 +22,11 @@ app.post("/upload", async (c) => {
     return c.text("No file uploaded", 400);
   }
 
-  // Create directories for the output files
+  // Create directory for the output files
   const outputDir = "./output";
   const splitDir = join(outputDir, "split-files");
   await ensureDir(outputDir);
+  // the splitDir is NOT created here, it's created in processJsonFile()
 
   // Save the uploaded file temporarily
   const uploadedFilePath = join(outputDir, uploadedFile.name);
@@ -55,6 +56,11 @@ app.post("/upload", async (c) => {
     const downloadFilePath = join(outputDir, "output.zip");
     const zipFile = await Deno.readFile(downloadFilePath);
     console.log(`Zip file read from disk, size: ${zipFile.length} bytes`);
+
+    // Tidy up for the next run, delete the outputDir directory
+    await Deno.remove(outputDir, { recursive: true });
+    console.log("Deleted output/split-files directory");
+
     return c.body(zipFile, 200, {
       'Content-Type': 'application/zip',
       'Content-Disposition': 'attachment; filename="output.zip"',
