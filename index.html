@@ -62,7 +62,9 @@
   </style>
 </head>
 <body>
-  <h1>Upload a JSON File</h1>
+  <h1>Upload an SBOM File</h1>
+  <h3>This tool will split the SBOM into individual files based on the components.</h3>
+  <h3>All processing done in memory.</h3>
   <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
     <label for="file-input">Choose File</label>
     <input id="file-input" type="file" name="file" accept=".json" required>
