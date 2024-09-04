@@ -9,7 +9,7 @@ function createZip(files: Record<string, string>): Uint8Array {
   const encoder = new TextEncoder();
   const zipParts: Uint8Array[] = [];
 
-  for (const [filename, content] of Object.entries(files)) {
+  for (const [filename, content] of Object.entries(files || {})) {
     const fileData = encoder.encode(content);
     const header = new Uint8Array([
       0x50, 0x4B, 0x03, 0x04, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -25,8 +25,8 @@ function createZip(files: Record<string, string>): Uint8Array {
 
   const centralDirectory = new Uint8Array([
     0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
-    ...new Uint16Array([Object.keys(files).length]).buffer,
-    ...new Uint16Array([Object.keys(files).length]).buffer,
+    ...new Uint16Array([Object.keys(files || {}).length]).buffer,
+    ...new Uint16Array([Object.keys(files || {}).length]).buffer,
     ...new Uint32Array([zipParts.reduce((acc, part) => acc + part.length, 0)]).buffer,
     0x00, 0x00, 0x00, 0x00,
   ]);
@@ -53,19 +53,29 @@ app.post("/upload", async (c) => {
   // Read the file content
   const fileContent = await uploadedFile.text();
 
-  // Process the JSON in memory
-  const splitFiles = await processJsonInMemory(fileContent);
+  try {
+    // Process the JSON in memory
+    const splitFiles = await processJsonInMemory(fileContent);
 
-  // Create a zip file in memory
-  const zipContent = createZip(splitFiles);
+    if (!splitFiles || Object.keys(splitFiles).length === 0) {
+      console.error("No files were generated from the JSON content.");
+      return c.text("Error processing the JSON file", 500);
+    }
 
-  console.log(`Zip file created in memory, size: ${zipContent.length} bytes`);
+    // Create a zip file in memory
+    const zipContent = createZip(splitFiles);
 
-  // Serve the zip file for download
-  return c.body(zipContent, 200, {
-    'Content-Type': 'application/zip',
-    'Content-Disposition': 'attachment; filename="output.zip"',
-  });
+    console.log(`Zip file created in memory, size: ${zipContent.length} bytes`);
+
+    // Serve the zip file for download
+    return c.body(zipContent, 200, {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': 'attachment; filename="output.zip"',
+    });
+  } catch (error) {
+    console.error("Error processing the JSON file:", error);
+    return c.text("Error processing the JSON file", 500);
+  }
 });
 
 // Start the server
