@@ -4,13 +4,83 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upload JSON File</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+    }
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    input[type="file"] {
+      display: none;
+    }
+    label {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    label:hover {
+      background-color: #2980b9;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #2ecc71;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #27ae60;
+    }
+    #file-name {
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
   <h1>Upload a JSON File</h1>
   <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".json" required>
+    <label for="file-input">Choose File</label>
+    <input id="file-input" type="file" name="file" accept=".json" required>
+    <div id="file-name"></div>
     <button type="submit">Upload and Process</button>
   </form>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const fileName = document.getElementById('file-name');
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        fileName.textContent = `Selected file: ${e.target.files[0].name}`;
+      } else {
+        fileName.textContent = '';
+      }
+    });
+  </script>
 </body>
 </html>
 
