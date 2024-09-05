@@ -13,36 +13,61 @@ function createZip(files: Record<string, string>): Uint8Array {
   for (const [filename, content] of Object.entries(files || {})) {
     const fileData = encoder.encode(content);
     const header = new Uint8Array([
-      0x50, 0x4B, 0x03, 0x04, // Local file header signature
-      0x14, 0x00, // Version needed to extract
-      0x00, 0x00, // General purpose bit flag
-      0x00, 0x00, // Compression method (0 = no compression)
-      ...new Uint8Array(new Uint32Array([Math.floor(Date.now() / 1000)]).buffer), // Last mod file time and date
+      0x50,
+      0x4B,
+      0x03,
+      0x04, // Local file header signature
+      0x14,
+      0x00, // Version needed to extract
+      0x00,
+      0x00, // General purpose bit flag
+      0x00,
+      0x00, // Compression method (0 = no compression)
+      ...new Uint8Array(
+        new Uint32Array([Math.floor(Date.now() / 1000)]).buffer,
+      ), // Last mod file time and date
       ...new Uint8Array(new Uint32Array([crc32(fileData)]).buffer), // CRC-32
       ...new Uint8Array(new Uint32Array([fileData.length]).buffer), // Compressed size
       ...new Uint8Array(new Uint32Array([fileData.length]).buffer), // Uncompressed size
       ...new Uint8Array(new Uint16Array([filename.length]).buffer), // File name length
-      0x00, 0x00, // Extra field length
+      0x00,
+      0x00, // Extra field length
     ]);
 
     zipParts.push(header, encoder.encode(filename), fileData);
 
     const centralDirHeader = new Uint8Array([
-      0x50, 0x4B, 0x01, 0x02, // Central directory file header signature
-      0x14, 0x00, // Version made by
-      0x14, 0x00, // Version needed to extract
-      0x00, 0x00, // General purpose bit flag
-      0x00, 0x00, // Compression method
-      ...new Uint8Array(new Uint32Array([Math.floor(Date.now() / 1000)]).buffer), // Last mod file time and date
+      0x50,
+      0x4B,
+      0x01,
+      0x02, // Central directory file header signature
+      0x14,
+      0x00, // Version made by
+      0x14,
+      0x00, // Version needed to extract
+      0x00,
+      0x00, // General purpose bit flag
+      0x00,
+      0x00, // Compression method
+      ...new Uint8Array(
+        new Uint32Array([Math.floor(Date.now() / 1000)]).buffer,
+      ), // Last mod file time and date
       ...new Uint8Array(new Uint32Array([crc32(fileData)]).buffer), // CRC-32
       ...new Uint8Array(new Uint32Array([fileData.length]).buffer), // Compressed size
       ...new Uint8Array(new Uint32Array([fileData.length]).buffer), // Uncompressed size
       ...new Uint8Array(new Uint16Array([filename.length]).buffer), // File name length
-      0x00, 0x00, // Extra field length
-      0x00, 0x00, // File comment length
-      0x00, 0x00, // Disk number start
-      0x00, 0x00, // Internal file attributes
-      0x00, 0x00, 0x00, 0x00, // External file attributes
+      0x00,
+      0x00, // Extra field length
+      0x00,
+      0x00, // File comment length
+      0x00,
+      0x00, // Disk number start
+      0x00,
+      0x00, // Internal file attributes
+      0x00,
+      0x00,
+      0x00,
+      0x00, // External file attributes
       ...new Uint8Array(new Uint32Array([offset]).buffer), // Relative offset of local header
     ]);
 
@@ -51,20 +76,30 @@ function createZip(files: Record<string, string>): Uint8Array {
   }
 
   const endOfCentralDir = new Uint8Array([
-    0x50, 0x4B, 0x05, 0x06, // End of central directory signature
-    0x00, 0x00, // Number of this disk
-    0x00, 0x00, // Disk where central directory starts
+    0x50,
+    0x4B,
+    0x05,
+    0x06, // End of central directory signature
+    0x00,
+    0x00, // Number of this disk
+    0x00,
+    0x00, // Disk where central directory starts
     ...new Uint8Array(new Uint16Array([centralDirectory.length / 2]).buffer), // Number of central directory records on this disk
     ...new Uint8Array(new Uint16Array([centralDirectory.length / 2]).buffer), // Total number of central directory records
-    ...new Uint8Array(new Uint32Array([centralDirectory.reduce((acc, part) => acc + part.length, 0)]).buffer), // Size of central directory
+    ...new Uint8Array(
+      new Uint32Array([
+        centralDirectory.reduce((acc, part) => acc + part.length, 0),
+      ]).buffer,
+    ), // Size of central directory
     ...new Uint8Array(new Uint32Array([offset]).buffer), // Offset of start of central directory, relative to start of archive
-    0x00, 0x00, // Comment length
+    0x00,
+    0x00, // Comment length
   ]);
 
   const result = new Uint8Array(
     zipParts.reduce((acc, part) => acc + part.length, 0) +
-    centralDirectory.reduce((acc, part) => acc + part.length, 0) +
-    endOfCentralDir.length
+      centralDirectory.reduce((acc, part) => acc + part.length, 0) +
+      endOfCentralDir.length,
   );
 
   let resultOffset = 0;
@@ -130,8 +165,8 @@ app.post("/upload", async (c) => {
 
     // Serve the zip file for download
     return c.body(zipContent, 200, {
-      'Content-Type': 'application/zip',
-      'Content-Disposition': 'attachment; filename="output.zip"',
+      "Content-Type": "application/zip",
+      "Content-Disposition": 'attachment; filename="output.zip"',
     });
   } catch (error) {
     console.error("Error processing the JSON file:", error);

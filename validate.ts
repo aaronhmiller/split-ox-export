@@ -48,5 +48,7 @@ async function runSbomUtility(outputDir: string) {
 }
 
 // Execute the function
-const outputDir = prompt("Please enter the path to the directory containing the split files:");
+const outputDir = prompt(
+  "Please enter the path to the directory containing the split files:",
+);
 await runSbomUtility(outputDir);
