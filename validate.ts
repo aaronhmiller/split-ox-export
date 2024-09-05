@@ -1,20 +1,17 @@
 // Import necessary Deno modules
 import { expandGlob, move } from "https://deno.land/std/fs/mod.ts";
+import { ensureDir } from "https://deno.land/std/fs/mod.ts";
 
 // Function to run sbom-utility command on each file and move failing ones
-async function runSbomUtility() {
-  const dirPath = "split-files";
+async function runSbomUtility(outputDir: string) {
+  const dirPath = outputDir;
   const errorDirPath = "erroring-split-files";
 
   // Ensure the error directory exists
   try {
-    const status = await Deno.stat(errorDirPath);
-    if (status.isDirectory) {
-      console.log(`[INFO] ${errorDirPath} directory already exists`);
-    } else {
-      await Deno.mkdir(errorDirPath);
-    }
+    await ensureDir(errorDirPath);
   } catch (error) {
+    console.error(`[ERROR]Error creating error directory: ${errorDirPath}`);
     throw error;
   }
   // Iterate over each file in the directory
@@ -51,4 +48,5 @@ async function runSbomUtility() {
 }
 
 // Execute the function
-await runSbomUtility();
+const outputDir = prompt("Please enter the path to the directory containing the split files:");
+await runSbomUtility(outputDir);
