@@ -1,3 +1,4 @@
 .DS_Store
 sbom-utility
 /split-files
+/erroring-split-files
